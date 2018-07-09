@@ -54,7 +54,7 @@ $jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
     <div class="shaelah-app-wrap hidden" id="shaelah-app-wrap">
         <p v-show="useFlatRate"><b>$25 flat rate for all deliveries</b></p>
         <p v-show="pickupLocation.area.length>0"><b>Target area: {{ pickupLocation.area }}</b></p>
-        <p v-show="showWarning" style="color:red;display: none;">There are no shipping methods available. Please ensure that your address has been entered correctly, or contact us if you need any help.</p>
+        <p v-show="showWarning" style="color:red;display: none;">Sorry we don’t deliver to your area, here are <a href="/how-it-works/">our shipping area</a>.</p>
         <p v-show="pickupLocation.value.length>0"><b>Pickup: {{ pickupLocation.value }}</b></p>
         <el-form :model="pickupLocation" class="demo-form-inline">
             <el-input class="mt-10 full-width" v-model="pickupLocation.postcode" placeholder="Insert post code to see your delivery options"></el-input>
@@ -225,6 +225,7 @@ var ShaelahPickupLocationsApp = new Vue({
           }else{
             // No result, the postcode is not a support area
             that.showWarning = true;
+            that.useFlatRate = false;
             that._fill(null);
             that._resetWooCommerceShippingForm();
           }
@@ -266,7 +267,7 @@ var ShaelahPickupLocationsApp = new Vue({
       jQuery("#calc_shipping_state").val('');
       jQuery("#calc_shipping_city").val('');
       jQuery("#calc_shipping_postcode").val('');
-      jQuery('#proceedToCheckoutLinkOrigin').attr('href',this.proceedToCheckoutLinkOrigin);
+      jQuery('#vue-proceed-to-checkout-button').attr('href',this.proceedToCheckoutLinkOrigin);
     },
     handleSelect: function(item){
       this._fill(item);

@@ -45,7 +45,19 @@ if(isset($_GET['shipping'])){
     // Save postcode in session
     WC()->session->set('shealah_shipping_postcode',$_GET['postcode']);
 }else{
-    $shipping = WC()->session->get('shealah_shipping_msg');
+    // No valid shipping area is submitted
+    // Save shopping cost description in session
+    WC()->session->set('shealah_shipping_msg',null);
+    // Save shopping cost in session
+    WC()->session->set('shealah_shipping_cost',null);
+    // Save area in session
+    WC()->session->set('shealah_shipping_area',null);
+    // Save pickup in session
+    WC()->session->set('shealah_shipping_pickup',null);
+    // Save postcode in session
+    WC()->session->set('shealah_shipping_postcode',null);
+//    $shipping = WC()->session->get('shealah_shipping_msg');
+    $shipping = 'Sorry we don’t deliver to your area, here are <a href="/how-it-works/">our shipping area</a>';
 }
 /**
  * Add by Justin Wang end
