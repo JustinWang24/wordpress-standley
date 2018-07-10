@@ -24,34 +24,10 @@ if ( 'no' === get_option( 'woocommerce_enable_shipping_calc' ) || ! WC()->cart->
 wp_enqueue_script( 'wc-country-select' );
 
 do_action( 'woocommerce_before_shipping_calculator' );
-$jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
 ?>
-<style>
-    .cart_totals{
-        margin: 0 auto;
-    }
-    .shaelah-app-wrap{
-        margin-top: 5px;
-        margin-bottom: 15px;
-    }
-    .shaelah-app-wrap p{
-        margin-bottom: 10px;
-    }
-    .shaelah-app-wrap .input-with-select{
-        width: 100%;
-    }
-    .shaelah-app-wrap .demo-form-inline{
-        margin: 0;
-    }
-    .shaelah-app-wrap .demo-form-inline .mt-10{
-      margin-top: 10px;
-    }
-    .shaelah-app-wrap .demo-form-inline .full-width{
-      width: 100%;
-    }
-</style>
-<div id="shaelah-pickup-locations-app">
-    <div class="shaelah-app-wrap hidden" id="shaelah-app-wrap">
+
+<div id="">
+    <div class="shaelah-app-wrap">
         <p v-show="useFlatRate"><b>$25 flat rate</b></p>
         <p v-show="showWarning" style="color:red;display: none;">Sorry we don’t deliver to your area. Please see our <a href="/how-it-works/">delivery areas</a>.</p>
         <p v-show="pickupLocation.value.length>0"><b>Pickup: {{ pickupLocation.value }}</b></p>
@@ -69,7 +45,7 @@ $jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
         </el-form>
     </div>
 
-<form class="woocommerce-shipping-calculator" action="<?php echo esc_url( wc_get_cart_url() ); ?>" method="post">
+    <form class="woocommerce-shipping-calculator" action="<?php echo esc_url( wc_get_cart_url() ); ?>" method="post">
 
 	<p><a href="#" class="shipping-calculator-button" style="display: none;">
             <?php esc_html_e( 'Calculate shipping', 'woocommerce' ); ?></a></p>
@@ -144,183 +120,7 @@ $jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
 	</section>
 </form>
 </div>
-<script type="application/javascript">
-<?php
-// Get data from session
-$sessionCost = WC()->session->get('shealah_shipping_cost');
-// Save area in session
-$sessionArea = WC()->session->get('shealah_shipping_area');
-// Save pickup in session
-$sessionPickupLocationValue = WC()->session->get('shealah_shipping_pickup');
-// Save pickup in session
-$sessionPostcode = WC()->session->get('shealah_shipping_postcode');
-?>
-const SHEALAH_AJAX_SUCCESS = 100;
-var ShaelahPickupLocationsApp = new Vue({
-  el:'#shaelah-pickup-locations-app',
-  data: function(){
-    return {
-      pickupLocation:{
-        postcode:'<?php echo $sessionPostcode?$sessionPostcode:null; ?>',
-        area:'<?php echo $sessionArea?$sessionArea:null; ?>',
-        option:'',
-        country: 'Australia',
-        state:'VIC',
-        suburb: '',
-        cost: <?php echo $sessionCost?$sessionCost:0; ?>,
-        value:'<?php echo $sessionPickupLocationValue?$sessionPickupLocationValue:null; ?>'
-      },
-      useFlatRate: <?php echo $sessionCost?'true':'false'; ?>,
-      showWarning: false,
-      querying: false,
-      pickupLocations: [], // pickup locations
-      proceedToCheckoutLinkOrigin:'',
-      proceedToCheckoutAllowed: false,
-      proceedToCheckoutButtonObject: null
-    };
-  },
-  watch:{
-    'pickupLocation.value':function(newVal, oldVal){
-      if(newVal !== oldVal){
-        this._updateCheckoutLink();
-      }
-      if(newVal.length > 0){
-        this._handleProceedToCheckoutButtonStatus(true);
-      }
-    }
-  },
-  mounted: function(){
-    var that = this;
-    // Observe proceed to checkout button
-    jQuery(document).ready(function(){
-      jQuery('#shaelah-app-wrap').removeClass('hidden');
-      that.proceedToCheckoutButtonObject = jQuery('#vue-proceed-to-checkout-button');
-      that.proceedToCheckoutLinkOrigin = that.proceedToCheckoutButtonObject.attr('href');
-      that.proceedToCheckoutButtonObject.on('click',function(evt){
-        evt.preventDefault();
-        if(that.proceedToCheckoutAllowed){
-          window.location.href = that.proceedToCheckoutButtonObject.attr('href');
-        }
-      });
-    });
-  },
-  methods: {
-    checkSubmitLocation:function(e){
-      e.preventDefault();
-      console.log(this.postcode);
-    },
-    queryPickupLocations: function(event){
-      event.preventDefault();
-      if(this.pickupLocation.postcode > 3){
-        this._handleProceedToCheckoutButtonStatus(false); // proceed disallowed, wait for response
-        var that = this;
-        this.querying = true;
-        jQuery.ajax({
-          url: '/wp-admin/admin-ajax.php',
-          type: "POST",
-          data: {
-            'action': 'handle_postcode_search',
-            'postcode': this.pickupLocation.postcode
-          },
-          dataType: "json"
-        }).done(function (res) {
-          that.querying = false;
-          if(res && res.error_no == SHEALAH_AJAX_SUCCESS){
-            that.showWarning = false;
-            that.useFlatRate = true;
-            that.pickupLocation.area = res.data.region;
-            if(res.data.pickups && res.data.pickups.length > 0){
-              // pickup locations
-              that.pickupLocations = res.data.pickups;
-            }else{
-              that.pickupLocations = [];
-              that.pickupLocation.value = '';
-              that._handleProceedToCheckoutButtonStatus(true); // proceed allowed
-            }
-            that._refreshWooCommerceShippingForm();
-          }else{
-            // No result, the postcode is not a support area
-            that.showWarning = true;
-            that.useFlatRate = false;
-            that._handleProceedToCheckoutButtonStatus(false); // proceed disallowed
-            that._fill(null);
-            that._resetWooCommerceShippingForm();
-          }
-        });
-      }
-    },
-    _handleProceedToCheckoutButtonStatus: function(allowed){
-      // Switch proceed to checkout button status
-      this.proceedToCheckoutAllowed = allowed;
-      if(allowed){
-        this.proceedToCheckoutButtonObject.removeClass('disabled');
-      }else{
-        this.proceedToCheckoutButtonObject.addClass('disabled');
-      }
-    },
-    _refreshWooCommerceShippingForm: function(){
-      jQuery("#calc_shipping_country").val(this.pickupLocation.country);
-      jQuery("#calc_shipping_state").val('VIC');
-      jQuery("#calc_shipping_city").val(this.pickupLocation.area);
-      jQuery("#calc_shipping_postcode").val(this.pickupLocation.postcode);
-      // jQuery("#original-calculate-shipping-button").trigger('click');
-      jQuery.ajax({
-        url: '/cart/',
-        type: "POST",
-        data: {
-          'calc_shipping_state': 'VIC',
-          'calc_shipping_city': this.pickupLocation.area,
-          'woocommerce-shipping-calculator-nonce': jQuery("#woocommerce-shipping-calculator-nonce").val(),
-          '_wp_http_referer': '/cart/',
-          'calc_shipping': 'x',
-          'calc_shipping_postcode': this.pickupLocation.postcode
-        },
-        dataType: "html"
-      }).done(function (res) {
 
-      });
-      this._updateCheckoutLink();
-    },
-    _updateCheckoutLink: function(){
-      var queryParams = '?shipping=25&area='+this.pickupLocation.area
-          +'&postcode='+this.pickupLocation.postcode
-          +'&pickup='+this.pickupLocation.value;
-      jQuery('#vue-proceed-to-checkout-button')
-          .attr('href',this.proceedToCheckoutLinkOrigin+queryParams);
-    },
-    _resetWooCommerceShippingForm: function(){
-      jQuery("#calc_shipping_country").val('');
-      jQuery("#calc_shipping_state").val('');
-      jQuery("#calc_shipping_city").val('');
-      jQuery("#calc_shipping_postcode").val('');
-      jQuery('#vue-proceed-to-checkout-button').attr('href',this.proceedToCheckoutLinkOrigin);
-    },
-    handleSelect: function(item){
-      this._fill(item);
-    },
-    _fill: function(item){
-      if(item){
-        this.pickupLocation.postcode = item.postcode;
-        this.pickupLocation.suburb = item.suburb;
-        this.pickupLocation.area = item.area;
-        this.pickupLocation.option = item.option;
-
-        // Todo: Get the real cost for delivery
-        this.pickupLocation.cost = item.cost;
-        this.pickupLocation.value = item.value;
-      }else{
-        this.pickupLocation.suburb = "";
-        this.pickupLocation.area = "";
-        this.pickupLocation.option = "";
-
-        // Todo: Get the real cost for delivery
-        this.pickupLocation.cost = 0;
-        this.pickupLocation.value = "";
-      }
-    }
-  }
-});
-</script>
 <?php
     do_action( 'woocommerce_after_shipping_calculator' );
 ?>
