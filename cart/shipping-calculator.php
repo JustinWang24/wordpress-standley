@@ -53,7 +53,7 @@ $jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
 <div id="shaelah-pickup-locations-app">
     <div class="shaelah-app-wrap hidden" id="shaelah-app-wrap">
         <p v-show="useFlatRate"><b>$25 flat rate</b></p>
-        <p v-show="showWarning" style="color:red;display: none;">Sorry we don’t deliver to your area, here are <a href="/how-it-works/">our shipping area</a>.</p>
+        <p v-show="showWarning" style="color:red;display: none;">Sorry we don’t deliver to your area. Please see our <a href="/how-it-works/">delivery areas</a>.</p>
         <p v-show="pickupLocation.value.length>0"><b>Pickup: {{ pickupLocation.value }}</b></p>
         <el-form :model="pickupLocation" class="demo-form-inline">
             <el-input class="mt-10 full-width" v-model="pickupLocation.postcode" placeholder="Insert post code to see your delivery options"></el-input>
