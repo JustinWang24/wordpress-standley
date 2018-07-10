@@ -23,6 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<a id="vue-proceed-to-checkout-button" href="<?php echo esc_url( wc_get_checkout_url() );?>" class="checkout-button button alt wc-forward">
+<a id="vue-proceed-to-checkout-button" href="<?php echo esc_url( wc_get_checkout_url() );?>" class="checkout-button button alt wc-forward disabled">
 	<?php esc_html_e( 'Proceed to checkout', 'woocommerce' ); ?>
 </a>

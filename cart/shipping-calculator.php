@@ -138,7 +138,7 @@ $jsApplicationCodes = file_get_contents(__DIR__.'/shaelah_app.js');
 
 		<?php endif; ?>
 
-		<p><button type="submit" name="calc_shipping" value="1" class="button" id="original-calculate-shipping-button" disabled="true"><?php esc_html_e( 'Update totals', 'woocommerce' ); ?></button></p>
+		<p><button type="submit" name="calc_shipping" value="1" class="button" id="original-calculate-shipping-button"><?php esc_html_e( 'Update totals', 'woocommerce' ); ?></button></p>
 
 		<?php wp_nonce_field( 'woocommerce-shipping-calculator', 'woocommerce-shipping-calculator-nonce' ); ?>
 	</section>
@@ -174,13 +174,18 @@ var ShaelahPickupLocationsApp = new Vue({
       showWarning: false,
       querying: false,
       pickupLocations: [], // pickup locations
-      proceedToCheckoutLinkOrigin:''
+      proceedToCheckoutLinkOrigin:'',
+      proceedToCheckoutAllowed: false,
+      proceedToCheckoutButtonObject: null
     };
   },
   watch:{
     'pickupLocation.value':function(newVal, oldVal){
       if(newVal !== oldVal){
         this._updateCheckoutLink();
+      }
+      if(newVal.length > 0){
+        this._handleProceedToCheckoutButtonStatus(true);
       }
     }
   },
@@ -189,7 +194,14 @@ var ShaelahPickupLocationsApp = new Vue({
     // Observe proceed to checkout button
     jQuery(document).ready(function(){
       jQuery('#shaelah-app-wrap').removeClass('hidden');
-      that.proceedToCheckoutLinkOrigin = jQuery('#vue-proceed-to-checkout-button').attr('href');
+      that.proceedToCheckoutButtonObject = jQuery('#vue-proceed-to-checkout-button');
+      that.proceedToCheckoutLinkOrigin = that.proceedToCheckoutButtonObject.attr('href');
+      that.proceedToCheckoutButtonObject.on('click',function(evt){
+        evt.preventDefault();
+        if(that.proceedToCheckoutAllowed){
+          window.location.href = that.proceedToCheckoutButtonObject.attr('href');
+        }
+      });
     });
   },
   methods: {
@@ -200,6 +212,7 @@ var ShaelahPickupLocationsApp = new Vue({
     queryPickupLocations: function(event){
       event.preventDefault();
       if(this.pickupLocation.postcode > 3){
+        this._handleProceedToCheckoutButtonStatus(false); // proceed disallowed, wait for response
         var that = this;
         this.querying = true;
         jQuery.ajax({
@@ -219,16 +232,30 @@ var ShaelahPickupLocationsApp = new Vue({
             if(res.data.pickups && res.data.pickups.length > 0){
               // pickup locations
               that.pickupLocations = res.data.pickups;
+            }else{
+              that.pickupLocations = [];
+              that.pickupLocation.value = '';
+              that._handleProceedToCheckoutButtonStatus(true); // proceed allowed
             }
             that._refreshWooCommerceShippingForm();
           }else{
             // No result, the postcode is not a support area
             that.showWarning = true;
             that.useFlatRate = false;
+            that._handleProceedToCheckoutButtonStatus(false); // proceed disallowed
             that._fill(null);
             that._resetWooCommerceShippingForm();
           }
         });
+      }
+    },
+    _handleProceedToCheckoutButtonStatus: function(allowed){
+      // Switch proceed to checkout button status
+      this.proceedToCheckoutAllowed = allowed;
+      if(allowed){
+        this.proceedToCheckoutButtonObject.removeClass('disabled');
+      }else{
+        this.proceedToCheckoutButtonObject.addClass('disabled');
       }
     },
     _refreshWooCommerceShippingForm: function(){
