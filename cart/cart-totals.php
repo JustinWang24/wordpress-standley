@@ -209,11 +209,16 @@ if ( ! defined( 'ABSPATH' ) ) {
             }
           });
           // get estimated total
-          that.currentEstimatedTotalObject = jQuery('.woocommerce-Price-amount:first');
-          if(that.currentEstimatedTotalObject){
-            var text = that.currentEstimatedTotalObject.text();
+
+          if(jQuery('.woocommerce-Price-amount:first')){
+            var text = jQuery('.woocommerce-Price-amount:last').text();
             that.originEstimatedTotal = parseFloat(text.substring(1));
             that.currentEstimatedTotal = that.pickupLocation.cost + that.originEstimatedTotal;
+          }
+
+          // In case the delivery info exists
+          if(that.pickupLocation.postcode.length > 0){
+            that._doSearchAction(false);
           }
         });
       },
@@ -222,42 +227,53 @@ if ( ! defined( 'ABSPATH' ) ) {
           event.preventDefault();
           if(this.pickupLocation.postcode > 3){
             this._handleProceedToCheckoutButtonStatus(false); // proceed disallowed, wait for response
-            var that = this;
-            this.querying = true;
-            jQuery.ajax({
-              url: '/wp-admin/admin-ajax.php',
-              type: "POST",
-              data: {
-                'action': 'handle_postcode_search',
-                'postcode': this.pickupLocation.postcode
-              },
-              dataType: "json"
-            }).done(function (res) {
-              that.querying = false;
-              if(res && res.error_no == SHEALAH_AJAX_SUCCESS){
-                that.showWarning = false;
-                that.useFlatRate = true;
-                that.pickupLocation.area = res.data.region;
+            this._doSearchAction(true);
+          }
+        },
+        _doSearchAction: function(pleaseResetLocationValue){
+          this.querying = true;
+          var that = this;
+          jQuery.ajax({
+            url: '/wp-admin/admin-ajax.php',
+            type: "POST",
+            data: {
+              'action': 'handle_postcode_search',
+              'postcode': this.pickupLocation.postcode
+            },
+            dataType: "json"
+          }).done(function (res) {
+            that.querying = false;
+            if(res && res.error_no == SHEALAH_AJAX_SUCCESS){
+              that.showWarning = false;
+              that.useFlatRate = true;
+              that.pickupLocation.area = res.data.region;
+
+              if(pleaseResetLocationValue){
                 that.pickupLocation.value = ''; // reset pickup location valve in every request
-                if(res.data.pickups && res.data.pickups.length > 0){
-                  // pickup locations
-                  that.pickupLocations = res.data.pickups;
-                }else{
-                  that.pickupLocations = [];
+              }
+
+              if(res.data.pickups && res.data.pickups.length > 0){
+                // pickup locations
+                that.pickupLocations = res.data.pickups;
+                if(!pleaseResetLocationValue){
+                  // Means it called from mounted hook
                   that._handleProceedToCheckoutButtonStatus(true); // proceed allowed
                 }
-                that._refreshWooCommerceShippingForm();
               }else{
-                // No result, the postcode is not a support area
-                that.showWarning = true;
-                that.useFlatRate = false;
                 that.pickupLocations = [];
-                that._handleProceedToCheckoutButtonStatus(false); // proceed disallowed
-                that._fill(null);
-                that._resetWooCommerceShippingForm();
+                that._handleProceedToCheckoutButtonStatus(true); // proceed allowed
               }
-            });
-          }
+              that._refreshWooCommerceShippingForm();
+            }else{
+              // No result, the postcode is not a support area
+              that.showWarning = true;
+              that.useFlatRate = false;
+              that.pickupLocations = [];
+              that._handleProceedToCheckoutButtonStatus(false); // proceed disallowed
+              that._fill(null);
+              that._resetWooCommerceShippingForm();
+            }
+          });
         },
         _handleProceedToCheckoutButtonStatus: function(allowed){
           // Switch proceed to checkout button status

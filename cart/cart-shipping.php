@@ -26,13 +26,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 $shipping = '';
 if(isset($_GET['shipping'])){
     if(isset($_GET['shipping'])){
-        $shipping .= '$'.$_GET['shipping'];
+        $shipping .= '$'.$_GET['shipping'].'.00';
     }
     if(isset($_GET['area'])){
-        $shipping .= ' ('.ucwords($_GET['area']).').';
+//        $shipping .= ' ('.ucwords($_GET['area']).').';
     }
     if(isset($_GET['pickup']) && strlen(trim($_GET['pickup']))>0){
-        $shipping .= ' Pickup location: '.$_GET['pickup'].'.';
+        $shipping .= ' (Pickup location: '.$_GET['pickup'].')';
     }
     // Save shopping cost description in session
     WC()->session->set('shealah_shipping_msg',$shipping);
@@ -47,17 +47,18 @@ if(isset($_GET['shipping'])){
 }else{
     // No valid shipping area is submitted
     // Save shopping cost description in session
-    WC()->session->set('shealah_shipping_msg',null);
-    // Save shopping cost in session
-    WC()->session->set('shealah_shipping_cost',null);
-    // Save area in session
-    WC()->session->set('shealah_shipping_area',null);
-    // Save pickup in session
-    WC()->session->set('shealah_shipping_pickup',null);
-    // Save postcode in session
-    WC()->session->set('shealah_shipping_postcode',null);
+//    WC()->session->set('shealah_shipping_msg',null);
+//    // Save shopping cost in session
+//    WC()->session->set('shealah_shipping_cost',null);
+//    // Save area in session
+//    WC()->session->set('shealah_shipping_area',null);
+//    // Save pickup in session
+//    WC()->session->set('shealah_shipping_pickup',null);
+//    // Save postcode in session
+//    WC()->session->set('shealah_shipping_postcode',null);
 //    $shipping = WC()->session->get('shealah_shipping_msg');
-    $shipping = 'Sorry we don’t deliver to your area, here are <a href="/how-it-works/">our shipping area</a>';
+    $shipping = WC()->session->get('shealah_shipping_msg');
+//    $shipping = 'Sorry we don’t deliver to your area, here are <a href="/how-it-works/">our shipping area</a>';
 }
 /**
  * Add by Justin Wang end
