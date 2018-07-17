@@ -118,7 +118,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<th><?php _e( 'Estimated Total', 'woocommerce' ); ?></th>
 			<td data-title="<?php esc_attr_e( 'Total', 'woocommerce' ); ?>">
           <div style="display: none;"><?php wc_cart_totals_order_total_html(); ?></div>
-          ${{ currentEstimatedTotal }}.00
+          ${{ currentEstimatedTotal.toFixed(2) }}
       </td>
 		</tr>
 
